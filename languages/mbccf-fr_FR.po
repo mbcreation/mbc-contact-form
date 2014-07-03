@@ -1,0 +1,58 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Radix Theme\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: fr_FR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.6.5\n"
+
+# mbccf
+msgid "Votre message a bien ete envoye."
+msgstr "Votre message a bien été envoyé."
+
+msgid "Envoyer"
+msgstr "Envoyer"
+
+msgid "Contactez-nous"
+msgstr "Contactez-nous"
+
+msgid "Le champ %s et sa confirmation doivent etre identiques"
+msgstr "Le champ \"%s\" et sa confirmation doivent être identiques"
+
+msgid "Les tags html sont interdits"
+msgstr "Les tags html sont interdits"
+
+msgid " non defini !"
+msgstr " non défini !"
+
+msgid "Le champ %s est obligatoire"
+msgstr "Le champ \"%s\" est obligatoire"
+
+msgid "Le champ %s nest pas un email valide"
+msgstr "Le champ\" %s\" n'est pas un email valide"
+
+msgid "Le format du fichier %s est incorrect"
+msgstr "Le format du fichier \"%s\" est incorrect"
+
+msgid "Erreur lors de lenvoi."
+msgstr "Erreur lors de l'envoi."
+
+msgid "Nom"
+msgstr "Nom"
+
+msgid "Prenom"
+msgstr "Prénom"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Votre message"
+msgstr "Votre message"
+
+msgid "Formulaire de contact"
+msgstr "Formulaire de contact"

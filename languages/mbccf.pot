@@ -1,0 +1,62 @@
+#mbccf
+
+#:mbc-contact-form.php
+msgid "Votre message a bien ete envoye."
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "Envoyer"
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "Contactez-nous"
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "Le champ %s et sa confirmation doivent etre identiques"
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "Les tags html sont interdits"
+msgstr ""
+
+#:mbc-contact-form.php
+msgid " non defini !"
+msgstr ""
+
+#:mbc-contact-form.php mbc-contact-form.php
+msgid "Le champ %s est obligatoire"
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "Le champ %s nest pas un email valide"
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "Le format du fichier %s est incorrect"
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "Erreur lors de lenvoi."
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "Nom"
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "Prenom"
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "Email"
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "Votre message"
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "Formulaire de contact"
+msgstr ""
+
