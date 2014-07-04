@@ -6,7 +6,7 @@
 	$total=array();
 	
 	$folders = array(
-		''
+		'/includes'
 	);
 	
 	foreach($folders as $folder)

@@ -1,4 +1,4 @@
-<h1>Contact From – v.0.1</h1>
+<h1>Contact From – v.0.2</h1>
 
 <h2>Utilisation :</h2>
 
@@ -16,7 +16,7 @@ Déclarer les filtres et les actions dans la fonctions <code>hooks()</code>.</p>
 <p>- Ecrire les fonctions appelées par les filters comme fonction publique de la classe.</p>
 
 
-<h2>Exemples de filtres<h2>
+<h2>Exemples de filtres</h2>
 
 <h3>Changer les destinataires :</h3>
 	<pre>
@@ -70,6 +70,10 @@ public function contact_form_fields($array)
 <li>data : pour radio, checkbox et select : tableau associatif des choix</li>
 <li>validation : pour file. Tableau associatif des tests à effectuer. Pour l'instant, uniquement clé 'mime_type' avec un tableau des types mime acceptés.</li></ul>
 
+<h3>Changer le titre du formualaire en bo</h3>
+
+<pre>add_filter('mbccf_contact-form_cpt_form_label', function(){ return 'Formulaire de contact'; } );<pre>
+
 <h3>Changer le comportement de l'uplaod de fichier</h3>
 	
 <pre>
@@ -118,6 +122,9 @@ public function contact_form_message($str, $object)
 </pre>
 
 <h2>Changelog</h2>
+
+<h3>Version : 0.2</h3>
+<p>- Adding saving as post type</p>
 
 <h3>Version : 0.1</h3>
 <p>- Initial release</p>

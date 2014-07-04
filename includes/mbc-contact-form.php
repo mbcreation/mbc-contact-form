@@ -11,7 +11,9 @@ if( !class_exists( 'MbcContactForm' ) )
 		
 		protected $shortcode;
 		protected $filter_prefix;
+		protected $filter_prefix_commun;
 		public $attachments;
+		protected $post_type_name;
 		
 		public $form_error = array();
 		public $form_message;
@@ -27,6 +29,10 @@ if( !class_exists( 'MbcContactForm' ) )
 		public $has_file;
 		public $send_files_as_attachments;
 		public $store_files_as_attachments;
+		public $save_as_post_type;
+		public $group_into_menu;
+		
+		public static $nb_instances = 0;
 
 		function __construct($shortcode)
 		{
@@ -34,7 +40,11 @@ if( !class_exists( 'MbcContactForm' ) )
 			$this->plugin_path = dirname(__FILE__);
 			$this->shortcode = $shortcode;
 			$this->filter_prefix = 'mbccf_'.$this->shortcode.'_';
+			$this->filter_prefix_commun = 'mbccf_';
+			$this->post_type_name = substr('mbccf_'.$this->shortcode, 0, 20);
 			$this->attachments = array();
+			
+			self::$nb_instances++;
 			
 			add_action('plugins_loaded', array($this, 'hooks' ) );
 			add_action('plugins_loaded', array($this, 'set_default_options' ) );
@@ -58,6 +68,17 @@ if( !class_exists( 'MbcContactForm' ) )
 			$this->send_files_as_attachments = apply_filters($this->filter_prefix.'send_files_as_attachments', true);
 			$this->store_files_as_attachments = apply_filters($this->filter_prefix.'store_files_as_attachments', false);
 			
+			$this->save_as_post_type = apply_filters($this->filter_prefix.'save_as_post_type', true);
+			
+			$this->group_into_menu = apply_filters($this->filter_prefix_commun.'group_into_menu', true);
+			
+			if($this->save_as_post_type)
+			{
+				add_action( 'init', array(&$this, 'register_post_type' )  );
+				if($this->group_into_menu)
+					add_action( 'admin_init', array(&$this, 'group_cpt_into_menu' )  );
+			}
+			
 		}
 		
 		public function hooks()
@@ -69,9 +90,14 @@ if( !class_exists( 'MbcContactForm' ) )
 
 			add_action( 'wp_enqueue_scripts', array($this, 'enqueue_scripts'), 999 );
 			
-			load_plugin_textdomain('mbccf', false, dirname(plugin_basename(__FILE__)).'/languages/');
+			load_plugin_textdomain('mbccf', false, dirname(plugin_basename(__FILE__)).'/../languages/');
 			
 			add_filter( 'body_class', array($this, 'add_body_class') );
+			
+			add_filter( 'manage_'.$this->post_type_name.'_posts_columns', array($this, 'cpt_liste_columns_header') );
+			add_filter( 'manage_edit-'.$this->post_type_name.'_sortable_columns', array($this, 'cpt_liste_sort_columns') );
+			add_filter( 'manage_'.$this->post_type_name.'_posts_custom_column', array($this, 'cpt_liste_columns_data'), 10, 2 );
+			
 			
 		}
 		
@@ -427,55 +453,62 @@ if( !class_exists( 'MbcContactForm' ) )
 				}
 				else
 				{
-					$upload_dir = wp_upload_dir();
-					$pos = strrpos($_FILES[$key]['name'],'.');
-					$nom_ss_ext = substr($_FILES[$key]['name'], 0, $pos);
-					$ext =  substr($_FILES[$key]['name'], $pos);
-					
-					$nom = date('Ymdhis_').sanitize_title($nom_ss_ext).$ext;
-					move_uploaded_file($_FILES[$key]['tmp_name'], $upload_dir['basedir'].'/'.$nom);
-					
-					
-						
-					if($this->store_files_as_attachments)
+					if($_FILES[$key]['name'] != '')
 					{
-						$filetype = wp_check_filetype( basename( $nom ), null );
-						$id = wp_insert_attachment( 
-							array(
-								'post_title' => $nom_ss_ext,
-								'post_content' => '',
-								'post_status'=> 'publish', 
-								'post_mime_type' => $filetype['type']
-							),
-							$upload_dir['basedir'].'/'.$nom, 0 
-						);
+						$upload_dir = wp_upload_dir();
+						$pos = strrpos($_FILES[$key]['name'],'.');
+						$nom_ss_ext = substr($_FILES[$key]['name'], 0, $pos);
+						$ext =  substr($_FILES[$key]['name'], $pos);
+					
+						$nom = date('Ymdhis_').sanitize_title($nom_ss_ext).$ext;
+						move_uploaded_file($_FILES[$key]['tmp_name'], $upload_dir['basedir'].'/'.$nom);
+					
+					
 						
-						if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) require_once( ABSPATH . 'wp-admin/includes/image.php' );
+						if($this->store_files_as_attachments)
+						{
+							$filetype = wp_check_filetype( basename( $nom ), null );
+							$id = wp_insert_attachment( 
+								array(
+									'post_title' => $nom_ss_ext,
+									'post_content' => '',
+									'post_status'=> 'publish', 
+									'post_mime_type' => $filetype['type']
+								),
+								$upload_dir['basedir'].'/'.$nom, 0 
+							);
+						
+							if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) require_once( ABSPATH . 'wp-admin/includes/image.php' );
 						 
-            			wp_update_attachment_metadata($id, wp_generate_attachment_metadata($id, $upload_dir['basedir'].'/'.$nom));
-            			
+							wp_update_attachment_metadata($id, wp_generate_attachment_metadata($id, $upload_dir['basedir'].'/'.$nom));
 						
-						$infos_upload = $_FILES[$key];
-						$files[$key]['attachment_id'] = $id;
 						
+							$infos_upload = $_FILES[$key];
+							$files[$key]['attachment_id'] = $id;
+							$infos_upload['attachment_id'] = $id;
+						
+						}
+						else
+						{
+							$infos_upload = $_FILES[$key];
+						}	
+					
+					
+					
+						if($this->send_files_as_attachments)
+						{
+							$infos_upload['url'] = $upload_dir['baseurl'].'/'.$nom;
+							$this->attachments[] = $upload_dir['basedir'].'/'.$nom;
+						}
+						else
+						{
+							$infos_upload['url'] = $upload_dir['baseurl'].'/'.$nom;
+						}
+						$this->fields[$key]['val'] = $infos_upload;
+					
 					}
 					else
-					{
-						$infos_upload = $_FILES[$key];
-					}	
-					
-					
-					
-					if($this->send_files_as_attachments)
-					{
-						$infos_upload['url'] = $nom;
-						$this->attachments[] = $upload_dir['basedir'].'/'.$nom;
-					}
-					else
-					{
-						$infos_upload['url'] = $upload_dir['baseurl'].'/'.$nom;
-					}
-					$this->fields[$key]['val'] = $infos_upload;
+						$this->fields[$key]['val'] = '';
 					
 					$this->validateField($field, $files[$key]);
 				}
@@ -562,21 +595,29 @@ if( !class_exists( 'MbcContactForm' ) )
 
 				$retour = wp_mail($to, $this->getSubject(), $this->getMessage(), $headers, $this->attachments);
 				
-				if($this->send_files_as_attachments and !$this->store_files_as_attachments)
+				if($this->send_files_as_attachments and !$this->store_files_as_attachments and !$this->save_as_post_type)
 				{
 					foreach($this->attachments as $a)
 					{
-						unlink($a);
+						if(file_exists($a))
+							unlink($a);
 					}
 				}
 
 			}
 	
 			do_action($this->filter_prefix.'after_sending_mail', $this);
+			
+			if($this->save_as_post_type)
+			{
+				$this->save_as_post_type();
+				do_action($this->filter_prefix.'after_saving_as_post_type', $this);
+			}
 
 			return $retour;
 
 		}
+		
 		
 		
 		/*
@@ -707,23 +748,18 @@ if( !class_exists( 'MbcContactForm' ) )
 
 			foreach($this->fields as $key=>$field)
 			{
-				$str .= $begin_tag.$field['label'].' : ';
-
-				if($field['type'] == 'file')
+				if($field['type'] != 'password_confirm')
 				{
-					if(isset($field['val']['url']))
-						$str .= $field['val']['url'];
-				}
-				elseif($field['type'] == 'checkbox')
-				{
-					$str .= implode(', ', $field['val']);
-				}
-				elseif($field['type'] == 'textarea' and $this->content_type == 'text/html')
-					$str .= nl2br($field['val']);
-				else
-					$str .= $field['val'];
+					$str .= $begin_tag.$field['label'].' : ';
 
-				$str .= $end_tag;
+					$val = $field['val'];
+					
+					$val = $this->prepareDisplay($val, $field, $key, true, ($this->content_type=='text/plain'));
+				
+					$str .= $val;
+				
+					$str .= $end_tag;
+				}
 			}
 
 			return apply_filters($this->filter_prefix.'message', $str, $this);
@@ -736,6 +772,282 @@ if( !class_exists( 'MbcContactForm' ) )
    			return $classes;
 		}
 		
+		
+		/* saving posts */
+		
+		public function register_post_type()
+		{
+				
+			$name = apply_filters($this->filter_prefix.'cpt_form_label', __( 'Formulaire', 'mbccf').' '.$this->post_type_name);
+			
+			$labels = array(
+				'name' => $name,
+				'singular_name' => $name,
+				'all_items' => __( 'Toutes les soumission', 'mbccf'),
+				'add_new' => '',
+				'add_new_item' => '',
+				'edit' => '',
+				'edit_item' => '',
+				'new_item' => '',
+				'view_item' => '',
+				'search_items' => __( 'Rechercher', 'mbccf'),
+				'not_found' =>  __( 'Aucune soumission', 'mbccf'),
+				'not_found_in_trash' => __( 'Non trouve dans la corbeille', 'mbccf'),
+				'parent_item_colon' => ''
+			);
+			
+			$labels = apply_filters($this->filter_prefix.'cpt_labels', $labels);
+			$description = apply_filters($this->filter_prefix.'cpt_description', $name);
+			$icon = apply_filters($this->filter_prefix.'cpt_icon', 'dashicons-email-alt');
+			$position = apply_filters($this->filter_prefix.'cpt_position', 100);
+			
+			$show_ui = !$this->group_into_menu;
+			
+			$cpt_options = array( 'labels' => $labels,
+				'description' => $description,
+				'public' => false,
+				'publicly_queryable' => false,
+				'exclude_from_search' => true,
+				'show_ui' => $show_ui,
+				'query_var' => false,
+				'menu_position' => $position,
+				'menu_icon' => $icon, 
+				'rewrite'	=> false,
+				'has_archive' => false,
+				'capability_type' => 'post',
+				'capabilities' => array(
+					'edit_post' => true,
+					'read_post' => true,
+					'delete_post' => true,
+					'edit_posts' => true,
+					'edit_others_posts' => true,
+					'publish_posts' => true,
+					'read_private_posts' => true,
+					'delete_posts' => true,
+					'delete_private_posts' => true,
+					'delete_published_posts' => true,
+					'delete_others_posts' => true,
+					'edit_private_posts' => true,
+					'edit_published_posts' => false,
+					'create_posts' => false
+				),
+				'map_meta_cap' => false,
+				'hierarchical' => false,
+				'supports' => array('title', 'thumbnail')
+			);
+			
+			$cpt_options = apply_filters($this->filter_prefix.'cpt_options', $cpt_options);
+			register_post_type( $this->post_type_name, $cpt_options); 
+
+		}
+		
+		public function save_as_post_type()
+		{
+			$name = apply_filters($this->filter_prefix.'cpt_form_label', __( 'Formulaire', 'mbccf').' '.$this->post_type_name);
+			
+			$post = array(
+				'post_title'    => $name,
+				'post_content'  => '',
+				'post_status'   => 'publish',
+				'post_author'   => 1,
+				'post_type' => $this->post_type_name
+			);
+			
+			$post = apply_filters($this->filter_prefix.'cpt_post', $post);
+			
+			$id = wp_insert_post($post);
+			
+			foreach($this->fields as $key=>$field)
+			{
+				
+				if($field['type'] == 'file')
+				{
+					if(isset($field['val']['url']))
+						$val = $field['val']['url'];
+					else
+						$val = '';
+					
+					if(isset($field['val']['attachment_id']))
+					{
+						$att_id = $field['val']['attachment_id'];
+						set_post_thumbnail($id, $att_id);
+						wp_update_post(array('ID'=>$att_id , 'post_parent'=>$id));
+					}
+				}
+				elseif($field['type'] == 'checkbox')
+				{
+					$val = implode(', ', $field['val']);
+				}
+				else
+					$val = $field['val'];
+					
+					
+				add_post_meta($id, $key, $val);
+			}
+			
+		}
+		
+		public function cpt_liste_columns_header($cols)
+		{
+			unset($cols['title']);
+			
+			foreach($this->fields as $key=>$field)
+			{
+				if($field['type'] != 'password_confirm')
+					$cols[$key] = apply_filters($this->filter_prefix.'cpt_column_'.$key.'_header', $field['label']);
+			}
+			
+			return apply_filters( $this->filter_prefix.'cpt_column_headers', $cols);
+		}
+
+		public function cpt_liste_columns_data($column, $post_id)
+		{
+			if(isset($this->fields[$column]))
+			{
+				$val = get_post_meta($post_id, $column, true);
+				
+				$val = $this->prepareDisplay($val, $this->fields[$column], $column, false, false, $post_id);
+				
+				echo apply_filters($this->filter_prefix.'cpt_column_'.$column.'_data', $val);
+			}
+		}
+		
+		public function prepareDisplay($val, $field, $key, $is_email = false, $email_plain = false, $post_id = false)
+		{
+			if($field['type'] == 'file')
+			{
+				if(isset($field['val']['url']))
+					$val = $field['val']['url'];
+								
+				if($this->send_files_as_attachments and $is_email)
+				{
+					$upload_dir = wp_upload_dir();
+					$val = str_replace($upload_dir['baseurl'].'/', '', $val);
+				}
+			}
+			
+			if($field['type'] == 'checkbox' and is_array($field['val']))
+			{
+				$val = implode(', ', $field['val']);
+			}
+				
+			if($field['type'] == 'textarea' and !$email_plain )
+				$val = nl2br($val);
+				
+			if($field['type']=='checkbox_unique')
+			{
+				$val = ( $val == 1 )?__('oui', 'mbccf'):__('non', 'mbccf');
+			}
+			
+			if(substr($val, 0, 7) == 'http://' and !$email_plain)
+			{
+				$upload_dir = wp_upload_dir();
+				$val = '<a href="'.$val.'" target="_blank">'.str_replace($upload_dir['baseurl'].'/', '', $val).'</a>';
+				
+				if(!$is_email and $post_id and $this->store_files_as_attachments)
+				{
+					$do_display_attachment_link = apply_filters($this->filter_prefix.'do_display_attachment_link', true);
+					
+					if($do_display_attachment_link)
+					{
+						$att_id = get_post_thumbnail_id($post_id);
+						if($att_id)
+						{
+							$val.= '<br /><a href="'.admin_url('post.php?post='.$att_id.'&action=edit').'">'._('Voir le media', 'mbccf').'</a>';
+						}
+					}
+				}
+			}
+			
+			
+			if(isset($field['data']))
+			{
+				if($field['type']=='checkbox')
+				{
+					$vals = explode(', ', $val);
+					foreach($vals as $i=>$v)
+						$vals[$i] = $this->getOptionLabel($key, $v);
+					$val = implode(', ', $vals);
+				}
+				else
+					$val = $this->getOptionLabel($key, $val);
+			}
+				
+			return $val;
+		}
+		
+		public function cpt_liste_sort_columns($cols)
+		{
+			foreach($this->fields as $key=>$field)
+			{
+				if($field['type'] != 'password_confirm')
+					$cols[$key] = $key;
+			}
+			
+			return apply_filters( $this->filter_prefix.'cpt_sort_columns', $cols);
+		}
+		
+		public function group_cpt_into_menu()
+		{
+
+			$url = 'edit.php?post_type='.$this->post_type_name;
+			if(self::$nb_instances == 1)
+				$menu_title = __( 'Formulaire', 'mbccf');
+			else
+				$menu_title = __( 'Formulaires', 'mbccf');
+				
+			$page_title = $menu_title;
+			
+			$name = apply_filters($this->filter_prefix.'cpt_form_label', __( 'Formulaire', 'mbccf').' '.$this->post_type_name);
+			
+			$page_title = apply_filters($this->filter_prefix_commun.'menu_page_title', $page_title);
+			$menu_title = apply_filters($this->filter_prefix_commun.'menu_menu_title', $menu_title);
+			$capability = apply_filters($this->filter_prefix_commun.'menu_capability', 'publish_posts');
+			$url = apply_filters($this->filter_prefix_commun.'menu_menu_slug', $url);
+			
+			$icon_url = apply_filters($this->filter_prefix_commun.'menu_icon_url', 'dashicons-email-alt');
+			$position = apply_filters($this->filter_prefix_commun.'menu_position', 100);
+
+			
+			if(self::$nb_instances == 1)
+			{
+				add_menu_page($page_title, $menu_title, $capability, $url, '', $icon_url);
+			}
+			else
+			{
+				global $menu;
+				$top_menu_slug = false;
+				foreach($menu as $m)
+				{
+					if(strpos($m[2], 'edit.php?post_type=mbccf_') !== false)
+					{
+						$top_menu_slug = $m[2];
+					}
+				}
+
+				if(!$top_menu_slug)
+				{
+					add_menu_page($page_title, $menu_title, $capability, $url, '', $icon_url);
+					add_submenu_page( $url, $name, $name, $capability, $url);
+				}
+				else
+				{
+					add_submenu_page( $top_menu_slug, $name, $name, $capability, $url);
+				}
+			}
+		}
+
+		public function getOptionLabel($field, $key)
+		{
+			$str = $key;
+			
+			if(isset($this->fields[$field]['data']) and isset($this->fields[$field]['data'][$key]))
+			{
+				$str = $this->fields[$field]['data'][$key];
+			}
+			
+			return $str;
+		}
 	}
 	
 }

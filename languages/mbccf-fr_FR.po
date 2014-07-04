@@ -56,3 +56,27 @@ msgstr "Votre message"
 
 msgid "Formulaire de contact"
 msgstr "Formulaire de contact"
+
+msgid "Formulaire"
+msgstr "Formulaire"
+
+msgid "Toutes les soumission"
+msgstr "Toutes les soumissions"
+
+msgid "Rechercher"
+msgstr "Rechercher"
+
+msgid "Aucune soumission"
+msgstr "Aucune soumission"
+
+msgid "Non trouve dans la corbeille"
+msgstr "Non trouvé dans la corbeille"
+
+msgid "oui"
+msgstr "oui"
+
+msgid "non"
+msgstr "non"
+
+msgid "Formulaires"
+msgstr "Formulaires"

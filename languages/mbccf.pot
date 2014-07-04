@@ -60,3 +60,35 @@ msgstr ""
 msgid "Formulaire de contact"
 msgstr ""
 
+#:mbc-contact-form.php mbc-contact-form.php mbc-contact-form.php mbc-contact-form.php
+msgid "Formulaire"
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "Toutes les soumission"
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "Rechercher"
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "Aucune soumission"
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "Non trouve dans la corbeille"
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "oui"
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "non"
+msgstr ""
+
+#:mbc-contact-form.php
+msgid "Formulaires"
+msgstr ""
+

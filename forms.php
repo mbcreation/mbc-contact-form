@@ -39,7 +39,14 @@ if( !class_exists( 'MbcContactForms' ) )
 			//ex : add_filter('mbccf_contact-form_fields', array($this, 'contact_form_fields' )); 
 			add_filter('mbccf_contact-form_fields', array($this, 'contact_form_fields' ));
 			//add_filter('mbccf_contact-form_use_selectbox', '__return_true'); 
-
+			add_filter('mbccf_contact-form_cpt_form_label', function(){ return 'Formulaire de contact'; } );
+			add_filter('mbccf_form-shortcode_cpt_form_label', function(){ return 'Formulaire de contact 2'; } );
+		
+			//add_filter('mbccf_contact-form_send_files_as_attachments', '__return_false');
+			//add_filter('mbccf_contact-form_content_type', function(){ return 'text/plain'; });
+			
+			add_filter('mbccf_contact-form_store_files_as_attachments', '__return_true');
+			
 		}
 		
 		
@@ -52,75 +59,75 @@ if( !class_exists( 'MbcContactForms' ) )
 			$array = array(
 				'text' => array(
 					'type'=> 'text',
-					'val' => '',
-					'label'=> __('Nom', 'mbccf'),
-					'mandatory' => true,
+					'val' => 'text',
+					'label'=> 'text',
+					'mandatory' => false,
 				),
 				
 				'password' => array(
 					'type'=> 'password',
-					'val' => '',
-					'label'=> __('Nom', 'mbccf'),
-					'mandatory' => true,
+					'val' => 'password',
+					'label'=> 'password',
+					'mandatory' => false,
 				),
 				
 				'password_confirm' => array(
 					'type'=> 'password_confirm',
-					'val' => '',
-					'label'=> __('Nom', 'mbccf'),
-					'mandatory' => true,
+					'val' => 'password',
+					'label'=> 'password_confirm',
+					'mandatory' => false,
 				),
 				
 				'email' => array(
 					'type'=> 'email',
-					'val' => '',
-					'label'=> __('Nom', 'mbccf'),
-					'mandatory' => true,
+					'val' => 'email',
+					'label'=> 'email',
+					'mandatory' => false,
 				),
 				
 				'textarea' => array(
 					'type'=> 'textarea',
-					'val' => '',
-					'label'=> __('Nom', 'mbccf'),
-					'mandatory' => true,
+					'val' => 'textarea',
+					'label'=> 'textarea',
+					'mandatory' => false,
 				),
 				
 				'radio' => array(
 					'type'=> 'radio',
-					'val' => '',
-					'label'=> __('Nom', 'mbccf'),
-					'data' => array(1, 2),
-					'mandatory' => true,
+					'val' => 'radio1',
+					'label'=> 'radio',
+					'data' => array('radio1'=>'Radio 1' ,'radio2'=>'Radio 2'),
+					'mandatory' => false,
 				),
 				
 				'checkbox' => array(
 					'type'=> 'checkbox',
-					'val' => '',
-					'label'=> __('Nom', 'mbccf'),
-					'data' => array(1, 2),
-					'mandatory' => true,
+					'val' => 'checkbox2',
+					'label'=> 'checkbox',
+					'data' => array('checkbox1'=>'Checkbox 1' ,'checkbox2'=>'Checkbox 2'),
+					'mandatory' => false,
 				),
 				
 				'checkbox_unique' => array(
 					'type'=> 'checkbox_unique',
-					'val' => '',
-					'label'=> __('Nom', 'mbccf'),
-					'mandatory' => true,
+					'val' => '1',
+					'label'=> 'checkbox_unique',
+					'mandatory' => false,
 				),
 				
 				'select' => array(
 					'type'=> 'select',
-					'val' => '',
-					'label'=> __('Nom', 'mbccf'),
-					'data' => array(1, 2),
-					'mandatory' => true,
+					'val' => 'select2',
+					'label'=> 'select',
+					'data' => array('select1'=>'Select 1' ,'select2'=>'Select 2'),
+					'mandatory' => false,
 				),
 				
 				'file' => array(
 					'type'=> 'file',
 					'val' => '',
-					'label'=> __('Nom', 'mbccf'),
-					'mandatory' => true,
+					'label'=> 'file',
+					'mandatory' => false,
 				),
 			);
 			
