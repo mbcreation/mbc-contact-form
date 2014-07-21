@@ -30,29 +30,19 @@ if( !class_exists( 'MbcContactForms' ) )
 			//ici déclarer tous les formulaires
 			// ex : $contact_form = new MbcContactForm('contact-form');
 			$contact_form = new MbcContactForm('contact-form');
-			$contact_form = new MbcContactForm('form-shortcode');
 		}
 		
 		public function hooks()
 		{
-			// ici déclarer tous les filters & actions
+			// ici déclarer tous les filters & actions. cf readme.md
 			//ex : add_filter('mbccf_contact-form_fields', array($this, 'contact_form_fields' )); 
-			add_filter('mbccf_contact-form_fields', array($this, 'contact_form_fields' ));
-			//add_filter('mbccf_contact-form_use_selectbox', '__return_true'); 
-			add_filter('mbccf_contact-form_cpt_form_label', function(){ return 'Formulaire de contact'; } );
-			add_filter('mbccf_form-shortcode_cpt_form_label', function(){ return 'Formulaire de contact 2'; } );
-		
-			//add_filter('mbccf_contact-form_send_files_as_attachments', '__return_false');
-			//add_filter('mbccf_contact-form_content_type', function(){ return 'text/plain'; });
-			
-			add_filter('mbccf_contact-form_store_files_as_attachments', '__return_true');
-			
 		}
-		
+
 		
 		/* ci-dessous : écrires les fonctions appelées via les filters */
 		
 		
+		/* exemple
 		public function contact_form_fields($array)
 		{ 
 	
@@ -133,7 +123,7 @@ if( !class_exists( 'MbcContactForms' ) )
 			
 			return $array;
 	
-		}
+		}*/
 	}
 	
 	$mbcContactForms = new MbcContactForms();
