@@ -1,10 +1,10 @@
 <?php
 
 /*
-Plugin Name:  Contact Form
+Plugin Name:  Contact Forms by MB Création
 Author: MB Création
 Description:  Formulaires de contact
-Version:      0.1
+Version:      1.0
 */
 
 if( !class_exists( 'MbcContactForms' ) )

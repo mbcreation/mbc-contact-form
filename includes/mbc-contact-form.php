@@ -24,6 +24,7 @@ if( !class_exists( 'MbcContactForm' ) )
 		public $title;
 		public $content_type;
 		public $use_selectbox;
+        public $use_filestyle;
 		public $use_labels;
 		public $use_placeholders;
 		public $has_file;
@@ -64,7 +65,8 @@ if( !class_exists( 'MbcContactForm' ) )
 			$this->use_selectbox = apply_filters($this->filter_prefix.'use_selectbox', false);
 			$this->use_labels = apply_filters($this->filter_prefix.'use_labels', true);
 			$this->use_placeholders = apply_filters($this->filter_prefix.'use_placeholders', false);
-			
+            $this->use_filestyle = apply_filters($this->filter_prefix.'use_filestyle', false);
+            
 			$this->send_files_as_attachments = apply_filters($this->filter_prefix.'send_files_as_attachments', true);
 			$this->store_files_as_attachments = apply_filters($this->filter_prefix.'store_files_as_attachments', false);
 			
@@ -115,7 +117,7 @@ if( !class_exists( 'MbcContactForm' ) )
 			
 			global $post;
 
-			if( is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, $this->shortcode) )
+			if( (is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, $this->shortcode)) || apply_filters( $this->filter_prefix . 'selectbox_context', false))
 			{
 				if($this->use_selectbox)
 				{
@@ -127,6 +129,7 @@ if( !class_exists( 'MbcContactForm' ) )
 				
 				if(file_exists( dirname(__FILE__) .'/../css/mbc-contact-form.css' ))
 					wp_enqueue_style( 'mbc-contact-form', plugins_url( '/../css/mbc-contact-form.css', plugin_basename( __FILE__ ) ));
+              
 			}
 			
 		}
@@ -216,16 +219,33 @@ if( !class_exists( 'MbcContactForm' ) )
 		}
 		
 		
-		protected function html_field($field)
+		public function html_field($field)
 		{
-
-			$str = apply_filters($this->filter_prefix.'html_field_wrapper_begining', '<p class="form-row form-row-'.$field.' form-row-'.$field.'-'.$this->shortcode.' form-row-'.$this->shortcode.'" id="form-row-'.$this->shortcode.'-'.$field.'">', $field);
+            
+            $class = '';
+            if(isset($this->fields[$field]['class']))
+                $class = $this->fields[$field]['class'];
+            
+			$str = apply_filters($this->filter_prefix.'html_field_wrapper_begining', '<p class="form-row form-row-'.$field.' form-row-'.$field.'-'.$this->shortcode.' form-row-'.$this->shortcode.' '.$class.'" id="form-row-'.$this->shortcode.'-'.$field.'">', $field);
+            
 			
 			switch($this->fields[$field]['type'])
 			{
+                
+                case 'hidden':
+					$str.= '<input value="'.$this->fields[$field]['val'].'" type="hidden"
+						name="'.$this->shortcode.'['.$field.']" id="'.$this->shortcode.'-'.$field.'">';
+					break;
+                
 				case 'text':
 					$str.= $this->label($this->fields[$field], $field);
 					$str.= '<input value="'.$this->fields[$field]['val'].'" type="text" class="input-text"
+						name="'.$this->shortcode.'['.$field.']" id="'.$this->shortcode.'-'.$field.'" placeholder="'.$this->placeholder($this->fields[$field]).'">';
+					break;
+
+				case 'date':
+					$str.= $this->label($this->fields[$field], $field);
+					$str.= '<input value="'.$this->fields[$field]['val'].'" type="date" class="input-text"
 						name="'.$this->shortcode.'['.$field.']" id="'.$this->shortcode.'-'.$field.'" placeholder="'.$this->placeholder($this->fields[$field]).'">';
 					break;
 
@@ -244,7 +264,7 @@ if( !class_exists( 'MbcContactForm' ) )
 
 				case 'textarea':
 					$str.= $this->label($this->fields[$field], $field);
-					$str.= '<textarea name="'.$this->shortcode.'['.$field.']" id="'.$this->shortcode.'-'.$field.'"
+					$str.= '<textarea name="'.$this->shortcode.'['.$field.']" id="'.$this->shortcode.'-'.$field.'"  class=""
 						placeholder="'.$this->placeholder($this->fields[$field]).'">'.$this->fields[$field]['val'].'</textarea>';
 					break;
 
@@ -252,7 +272,7 @@ if( !class_exists( 'MbcContactForm' ) )
 					$str.= $this->label($this->fields[$field], $field);
 					foreach($this->fields[$field]['data'] as $val=>$name)
 					{
-						$str.='<input type="radio" class="input-radio" name="'.$this->shortcode.'['.$field.']" id="'.$this->shortcode.'-'.$field.'-'.$val.'" value="'.$val.'"';
+						$str.='<input type="radio" class="input-radio " name="'.$this->shortcode.'['.$field.']" id="'.$this->shortcode.'-'.$field.'-'.$val.'" value="'.$val.'"';
 						if($this->fields[$field]['val'] == $val)
 							$str.=' checked="checked"';
 						$str.=' /><label class="label_radio_data" for="'.$this->shortcode.'-'.$field.'-'.$val.'">'.$name.'</label>';
@@ -262,18 +282,28 @@ if( !class_exists( 'MbcContactForm' ) )
 				case 'checkbox':
 					$str.= $this->label($this->fields[$field], $field);
 
+					$cpt = 0;
 					foreach($this->fields[$field]['data'] as $val=>$name)
 					{
-						$str.='<input class="input-checkbox" type="checkbox" name="'.$this->shortcode.'['.$field.'][]" id="'.$this->shortcode.'-'.$field.'-'.$val.'" value="'.$val.'"';
+						$str.='<input class="input-checkbox ';
+						
+						if($cpt == 0)
+							$str.=' first-cb';
+						
+						$str.='" type="checkbox" name="'.$this->shortcode.'['.$field.'][]" id="'.$this->shortcode.'-'.$field.'-'.sanitize_title($val).'" value="'.$val.'"';
 						if(is_array($this->fields[$field]['val']) and in_array($val, $this->fields[$field]['val']))
 							$str.=' checked="checked"';
+						
+							
 						$str.=' /><label class="label_checkbox_data" for="'.$this->shortcode.'-'.$field.'-'.$val.'">'.$name.'</label>';
+						
+						$cpt++;
 					}
 
 					break;
 
 				case 'checkbox_unique':
-					$str.= '<input value="1" class="input-checkbox-unique" type="checkbox"
+					$str.= '<input value="1" class="input-checkbox-unique " type="checkbox"
 						name="'.$this->shortcode.'['.$field.']" id="'.$this->shortcode.'-'.$field.'" ';
 
 					if($this->fields[$field]['val'] == 1)
@@ -285,9 +315,49 @@ if( !class_exists( 'MbcContactForm' ) )
 
 
 				case 'file':
-					$str.= $this->label($this->fields[$field], $field);
-					$str.= '<input type="file" class="input-file"
-						name="'.$field.'" id="'.$this->shortcode.'-'.$field.'">';
+                    if(!$this->use_filestyle)
+                    {
+                        $str.= $this->label($this->fields[$field], $field);
+                    }
+                
+                    $str.= '<input type="file" class="input-file"
+                            name="'.$field.'" id="'.$this->shortcode.'-'.$field.'" />';
+                
+                    
+                    if($this->use_filestyle)
+                    {
+                        $key = md5(microtime());
+                        $str.= '<span class="file_fake" id="rel_'.$this->shortcode.'-'.$field.$key.'"><a href="#" class="bouton" rel="'.$this->shortcode.'-'.$field.'">'.$this->fields[$field]['label'].'<span class="file_ok"></span></a></span>';
+                        
+                        $str.='<script type="text/javascript">
+						(function($){
+							$(document).ready(function(){
+								var responsive_viewport = $("body").width();
+
+								if (responsive_viewport > 1024) {
+									$("#'.$this->shortcode.'-'.$field.'").hide();
+                                    $(".file_fake#rel_'.$this->shortcode.'-'.$field.$key.' .file_ok").hide();
+                                    
+                                    $(document).on("click", ".file_fake#rel_'.$this->shortcode.'-'.$field.$key.' a", function(e){
+                                        e.preventDefault();
+                                        var rel = $(this).attr("rel");
+                                        $("#"+rel).trigger("click");
+                                        
+                                    });
+                                    
+                                    $("#'.$this->shortcode.'-'.$field.'").on("change", function(){
+                                        $(".file_fake#rel_'.$this->shortcode.'-'.$field.$key.' .file_ok").show();
+                                    });
+								}
+                                else
+                                {
+                                    $("#rel_'.$this->shortcode.'-'.$field.$key.'").hide();
+                                }
+							});
+						})(jQuery)
+						</script>';
+                        
+                    }
 					break;
 
 
@@ -299,7 +369,7 @@ if( !class_exists( 'MbcContactForm' ) )
 					$default_select_value = apply_filters($this->filter_prefix.'default_select_value', $default_select_value, $this->fields[$field]);
 					
 					$str.= $this->label($this->fields[$field], $field);
-					$str.= '<select name="'.$this->shortcode.'['.$field.']" id="'.$this->shortcode.'-'.$field.'">
+					$str.= '<select name="'.$this->shortcode.'['.$field.']" id="'.$this->shortcode.'-'.$field.'"  class="">
 						<option value="">'.$default_select_value.'</option>';
 
 					foreach($this->fields[$field]['data'] as $val=>$name)
@@ -315,11 +385,9 @@ if( !class_exists( 'MbcContactForm' ) )
 						$str.='<script type="text/javascript">
 						(function($){
 							$(document).ready(function(){
-								var responsive_viewport = $(window).width();
-
-								if (responsive_viewport > 1030) {
-									$("#'.$this->shortcode.'-'.$field.'").selectbox();
-								}
+								
+								$("#'.$this->shortcode.'-'.$field.'").selectbox();
+								
 							});
 						})(jQuery)
 						</script>';
@@ -559,9 +627,16 @@ if( !class_exists( 'MbcContactForm' ) )
 			$form = $this->getForm();
 
 			if($this->display_form)
-				return apply_filters($this->filter_prefix.'form_with_errors', $this->form_message.$form, $this->form_message, $form);
-
-			return $this->form_message;
+            {
+			    $returned_form = sprintf($form, $this->form_message);
+                return apply_filters($this->filter_prefix.'form_with_errors', $returned_form, $this->form_message, $form);
+            }
+            
+            $formtitle = '';
+            if($this->title)
+				$formtitle.=  $this->title;
+            
+			return apply_filters($this->filter_prefix.'form_without_errors', '<div class="form-like" id="mbc_contact_form_'.$this->shortcode.'">'.$formtitle.$this->form_message.'</div>', $formtitle, $this->form_message);
 		} // form_shortcode
 		
 		/*
@@ -575,6 +650,7 @@ if( !class_exists( 'MbcContactForm' ) )
 			$retour = true;
 	
 			do_action($this->filter_prefix.'before_sending_mail', $this);
+            $this->fields = apply_filters($this->filter_prefix.'filter_fields_before_sending_mail', $this->fields);
 	
 			if(apply_filters($this->filter_prefix.'do_send_email', true))
 			{
@@ -663,20 +739,28 @@ if( !class_exists( 'MbcContactForm' ) )
 		protected function getForm()
 		{
 			$classform = apply_filters($this->filter_prefix.'classform', $this->shortcode.' clearfix');
-			
-			$formbegin = '<form method="post" id="mbc_contact_form_'.$this->shortcode.'" class="'.$classform.'" action="'.$_SERVER['REQUEST_URI'].'" '.($this->has_file?'enctype="multipart/form-data"':'').'>';
+            $class_submit = apply_filters($this->filter_prefix.'classsubmit', 'button');
+			$action = apply_filters($this->filter_prefix.'action', $_SERVER['REQUEST_URI']);
+            
+			$formbegin = '<form method="post" id="mbc_contact_form_'.$this->shortcode.'" class="'.$classform.'" action="'.$action.'#mbc_contact_form_'.$this->shortcode.'" '.($this->has_file?'enctype="multipart/form-data"':'').'>';
 
 			$formtitle = '';
 			if($this->title)
 				$formtitle.=  $this->title;
 			
-			$form = '';
+			$form = '%s';
+			
+			$inner_form = '';
+			
 			foreach($this->fields as $key=>$field)
 			{
-				$form .= $this->html_field($key);
+				$inner_form .= $this->html_field($key);
 			}
 
-			$formsubmit = '<input type="submit" class="button" value="'.$this->button_label.'" name="'.$this->shortcode.'[submit]">';
+			$inner_form = apply_filters($this->filter_prefix.'innerform', $inner_form, $this);
+
+			$form .= $inner_form;
+			$formsubmit = '<p class="submit"><input type="submit" class="'.$class_submit.'" value="'.$this->button_label.'" name="'.$this->shortcode.'[submit]"></p>';
 
 			$nonce= wp_nonce_field( $this->shortcode , '_wpnonce', true, false );
 			
@@ -1017,23 +1101,26 @@ if( !class_exists( 'MbcContactForm' ) )
 			{
 				global $menu;
 				$top_menu_slug = false;
-				foreach($menu as $m)
-				{
-					if(strpos($m[2], 'edit.php?post_type=mbccf_') !== false)
-					{
-						$top_menu_slug = $m[2];
-					}
-				}
+                if(is_array($menu))
+                {
+                    foreach($menu as $m)
+                    {
+                        if(strpos($m[2], 'edit.php?post_type=mbccf_') !== false)
+                        {
+                            $top_menu_slug = $m[2];
+                        }
+                    }
 
-				if(!$top_menu_slug)
-				{
-					add_menu_page($page_title, $menu_title, $capability, $url, '', $icon_url);
-					add_submenu_page( $url, $name, $name, $capability, $url);
-				}
-				else
-				{
-					add_submenu_page( $top_menu_slug, $name, $name, $capability, $url);
-				}
+                    if(!$top_menu_slug)
+                    {
+                        add_menu_page($page_title, $menu_title, $capability, $url, '', $icon_url);
+                        add_submenu_page( $url, $name, $name, $capability, $url);
+                    }
+                    else
+                    {
+                        add_submenu_page( $top_menu_slug, $name, $name, $capability, $url);
+                    }
+                }
 			}
 		}
 
