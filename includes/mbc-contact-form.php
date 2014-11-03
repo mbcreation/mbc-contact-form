@@ -32,6 +32,7 @@ if( !class_exists( 'MbcContactForm' ) )
 		public $store_files_as_attachments;
 		public $save_as_post_type;
 		public $group_into_menu;
+		public $send_confirmation;
 		
 		public static $nb_instances = 0;
 
@@ -71,6 +72,9 @@ if( !class_exists( 'MbcContactForm' ) )
 			$this->store_files_as_attachments = apply_filters($this->filter_prefix.'store_files_as_attachments', false);
 			
 			$this->save_as_post_type = apply_filters($this->filter_prefix.'save_as_post_type', true);
+			
+			
+			$this->send_confirmation = apply_filters($this->filter_prefix.'send_confirmation', false);
 			
 			$this->group_into_menu = apply_filters($this->filter_prefix_commun.'group_into_menu', true);
 			
@@ -669,7 +673,29 @@ if( !class_exists( 'MbcContactForm' ) )
 				}
 				$headers .='Content-Type: '.$this->content_type.'; charset="utf-8"'."\n";
 
-				$retour = wp_mail($to, $this->getSubject(), $this->getMessage(), $headers, $this->attachments);
+				$subject = $this->getSubject();
+				$message = $this->getMessage();
+				
+				$retour = wp_mail($to, $subject, $message, $headers, $this->attachments);
+				
+				if($this->send_confirmation)
+				{
+					$attachments = false;
+					if(apply_filters($this->filter_prefix.'send_attachments_in_confirmation', false))
+						$attachments = $this->attachments;
+					
+					$default_to = $to;
+					if(isset($this->fields['email']))
+						$default_to = $this->fields['email']['val'];
+					$to = apply_filters($this->filter_prefix.'confirmation_to', $default_to);
+					$subject =  apply_filters($this->filter_prefix.'confirmation_subject', $subject);
+					
+					$message =  apply_filters($this->filter_prefix.'confirmation_message', $message);
+					
+					$headers =  apply_filters($this->filter_prefix.'confirmation_headers', $headers); 
+					
+					wp_mail($to, $subject, $message, $headers, $attachments);
+				}
 				
 				if($this->send_files_as_attachments and !$this->store_files_as_attachments and !$this->save_as_post_type)
 				{
@@ -693,6 +719,7 @@ if( !class_exists( 'MbcContactForm' ) )
 			return $retour;
 
 		}
+		
 		
 		
 		
